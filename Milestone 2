@@ -1,0 +1,80 @@
+import os
+import openai
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+from openai import OpenAI
+
+OPENAI_API_KEY=("your_open_api_key_here")
+
+client = OpenAI()
+
+# Dashboard title
+st.title("🌊 Water Quality Monitor Dashboard")
+
+# Sidebar for user input
+st.sidebar.header("Water Quality Parameters")
+pH = st.sidebar.slider("pH Level", 0.0, 14.0, 7.0)
+temperature = st.sidebar.slider("Temperature (°C)", 0.0, 50.0, 25.0)
+turbidity = st.sidebar.slider("Turbidity (NTU)", 0.0, 100.0, 5.0)
+dissolved_oxygen = st.sidebar.slider("Dissolved Oxygen (mg/L)", 0.0, 15.0, 8.0)
+conductivity = st.sidebar.slider("Conductivity (µS/cm)", 0.0, 2000.0, 500.0)
+
+# Sample data (you can replace this with live data if available)
+data = {
+    "Parameter": ["pH", "Temperature (°C)", "Turbidity (NTU)", 
+                  "Dissolved Oxygen (mg/L)", "Conductivity (µS/cm)"],
+    "Value": [pH, temperature, turbidity, dissolved_oxygen, conductivity],
+    "Safe Range": ["6.5 - 8.5", "<35", "<5", "6-10", "<1000"]
+}
+
+df = pd.DataFrame(data)
+
+# Display water quality parameters as a table
+st.subheader("📋 Water Quality Parameters")
+st.dataframe(df)
+
+# Display metrics
+st.subheader("📊 Water Quality Metrics")
+col1, col2, col3 = st.columns(3)
+col1.metric(label="pH", value=f"{pH}")
+col2.metric(label="Temperature", value=f"{temperature} °C")
+col3.metric(label="Turbidity", value=f"{turbidity} NTU")
+
+col4, col5 = st.columns(2)
+col4.metric(label="Dissolved Oxygen", value=f"{dissolved_oxygen} mg/L")
+col5.metric(label="Conductivity", value=f"{conductivity} µS/cm")
+
+# Plotting a graph to visualize data
+st.subheader("📈 Parameter Comparison")
+
+fig, ax = plt.subplots()
+ax.bar(df["Parameter"], df["Value"], color="skyblue")
+ax.set_xlabel("Parameter")
+ax.set_ylabel("Value")
+ax.set_title("Water Quality Parameter Values")
+st.pyplot(fig)
+
+# User feedback on water quality
+if st.button("Analyze Water Quality"):
+    issues = []
+    if not (6.5 <= pH <= 8.5):
+        issues.append("⚠️ pH level is out of safe range.")
+    if temperature > 35:
+        issues.append("⚠️ Temperature is too high.")
+    if turbidity > 5:
+        issues.append("⚠️ Turbidity exceeds safe limit.")
+    if not (6 <= dissolved_oxygen <= 10):
+        issues.append("⚠️ Dissolved oxygen is out of range.")
+    if conductivity > 1000:
+        issues.append("⚠️ Conductivity is too high.")
+
+    if issues:
+        st.warning("Potential Issues Detected:")
+        for issue in issues:
+            st.write(issue)
+    else:
+        st.success("✅ All parameters are within safe ranges.")
+
+# Footer
+st.sidebar.markdown("Developed with ❤️ using Streamlit")
